@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Pocketwise: interactive 30-day personal finance simulator.">
+<title>Pocketwise | Survive the Month</title>
+
+<style>
+:root {
+  --bg:#f4f6f1;
+  --card:#fff;
+  --ink:#19251e;
+  --muted:#77847a;
+  --line:#e5eae3;
+  --green:#c8f36a;
+  --dark:#193426;
+  --red:#d9534f;
+  --amber:#bd7a27;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #8fb65d;outline-offset:2px}
+.app{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100vh}
+aside{background:#17261d;color:white;padding:25px 15px}
+.logo{font-size:24px;font-weight:900;padding:5px 8px 30px}
+.logo span{color:var(--green)}
+.logo small{display:block;font-size:10px;letter-spacing:2px;color:#9daea1}
+.nav-label{font-size:10px;letter-spacing:2px;color:#9daea1;padding:10px}
+.nav{width:100%;padding:12px;border:0;border-radius:9px;background:transparent;color:#c5d0c7;text-align:left;margin:3px 0}
+.nav:hover,.nav.active{background:#304337;color:var(--green)}
+.side-note{margin:35px 8px;font-size:11px;line-height:1.8;color:#b5c4b8}
+main{width:100%;max-width:1500px;padding:28px;margin:auto;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.eyebrow{font-size:10px;letter-spacing:2px;color:#54792e;font-weight:800}
+h1{font-size:clamp(26px,3vw,36px);letter-spacing:-1px;margin:8px 0}
+.subtitle,.muted{color:var(--muted);font-size:12px}
+.badge{background:#eaf4d9;color:#42651d;padding:8px 12px;border-radius:30px;font-size:10px;font-weight:800}
+.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px;min-width:0;box-shadow:0 6px 20px #19342606}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:15px}
+.metric-label{font-size:11px;color:var(--muted)}
+.metric{font-size:clamp(22px,2.4vw,30px);font-weight:850;letter-spacing:-1px;margin:10px 0 5px;overflow-wrap:anywhere}
+.metric-note{font-size:10px;color:var(--muted)}
+.hero{background:var(--dark);color:white;border-radius:17px;padding:23px;margin-bottom:15px}
+.hero .metric{font-size:clamp(34px,4vw,47px);color:var(--green)}
+.hero .metric-label,.hero .subtitle{color:#c3d0c5}
+.progress{height:8px;background:#e9eee6;border-radius:20px;overflow:hidden;margin:13px 0 8px}
+.progress div{height:100%;width:0;background:#719b43;border-radius:20px;transition:width .2s}
+.hero .progress{background:#3a5040}
+.hero .progress div{background:var(--green)}
+.details{display:flex;justify-content:space-between;gap:10px;font-size:10px;color:var(--muted)}
+.hero .details{color:#c3d0c5}
+.hero-bottom{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px}
+.hero-stat{border-top:1px solid #405849;padding-top:12px}
+.hero-stat strong{display:block;font-size:20px;margin-top:6px}
+.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(270px,1fr);gap:15px;align-items:start}
+.section{margin-bottom:15px;scroll-margin-top:15px}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
+.section-title h2{font-size:15px;margin:0}
+label{display:block;font-size:10px;font-weight:750;color:var(--muted);margin-bottom:6px}
+input,select{width:100%;min-width:0;padding:11px;border:1px solid var(--line);border-radius:9px;background:#fbfcfa;color:var(--ink)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{min-width:0}
+.full{grid-column:1/-1}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+.btn{padding:10px 13px;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);font-size:11px;font-weight:750}
+.btn.primary{background:var(--ink);color:white;border-color:var(--ink)}
+.btn.lime{background:var(--green);border-color:var(--green)}
+.btn.danger{color:var(--red)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.transaction{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #edf0eb}
+.transaction:last-child{border-bottom:0}
+.tx-left{display:flex;align-items:center;gap:10px;min-width:0}
+.tx-icon{width:38px;height:38px;border-radius:11px;background:#edf4e7;display:grid;place-items:center;flex-shrink:0;font-size:17px}
+.tx-name{font-size:12px;font-weight:750;overflow-wrap:anywhere}
+.tx-meta{font-size:10px;color:var(--muted);margin-top:4px}
+.tx-amount{font-size:12px;font-weight:800;white-space:nowrap}
+.positive{color:#347847}.negative{color:var(--red)}
+.empty{text-align:center;padding:20px 0;color:var(--muted);font-size:12px}
+.category-row{margin:15px 0}
+.category-head{display:flex;justify-content:space-between;gap:10px;font-size:11px}
+.category-bar{height:7px;border-radius:20px;background:#edf0eb;overflow:hidden;margin-top:8px}
+.category-bar div{height:100%;background:#608a3e;border-radius:20px}
+.goal{padding:13px;border:1px solid var(--line);border-radius:11px;margin-top:10px}
+.goal-head{display:flex;justify-content:space-between;gap:10px;font-size:11px}
+.risk-box{background:#f0f5e9;padding:15px;border-radius:11px;margin-bottom:14px}
+.risk-box strong{font-size:16px}
+.risk-box p{font-size:11px;color:#647465;line-height:1.7;margin-bottom:0}
+.insight{padding:12px;background:#f5f8f2;border-left:3px solid #608a3e;border-radius:0 8px 8px 0;font-size:11px;line-height:1.7;margin-top:9px}
+.sim-result{padding:16px;background:#193426;color:white;border-radius:12px;margin-top:14px}
+.sim-result .metric-label,.sim-result .subtitle{color:#c3d0c5}
+.sim-numbers{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:13px}
+.sim-numbers strong{display:block;font-size:20px;margin-top:5px}
+.hidden{display:none!important}
+footer{text-align:center;color:var(--muted);font-size:10px;padding:25px 0}
+@media(max-width:1000px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}}
+@media(max-width:650px){.app{grid-template-columns:1fr}aside{padding:12px}.logo{padding:4px 7px 12px}.nav-label,.side-note{display:none}.nav{display:inline-block;width:auto;padding:9px;font-size:10px}main{padding:14px}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+
+<body>
+<div class="app">
+<aside>
+  <div class="logo">pocket<span>wise.</span><small>MONEY, MADE REAL.</small></div>
+  <div class="nav-label">YOUR SPACE</div>
+  <button class="nav active" data-target="dashboard">▦ Overview</button>
+  <button class="nav" data-target="transactions">↕ Transactions</button>
+  <button class="nav" data-target="commitments">↻ Commitments</button>
+  <button class="nav" data-target="goals">◎ Savings goals</button>
+  <button class="nav" data-target="decisionLab">✳ Decision Lab</button>
+  <button class="nav" data-target="forecast">⌁ Forecast & health</button>
+  <div class="side-note">30 DAYS. ₹10,000.<br>Every decision counts.<br><br>PERSONAL FINANCE SIMULATOR</div>
+</aside>
+
+<main>
+<header class="topbar" id="dashboard">
+  <div>
+    <div class="eyebrow">YOUR 30-DAY MONEY CHALLENGE</div>
+    <h1>Make your money last. 🌱</h1>
+    <div class="subtitle">Small decisions today. More freedom tomorrow.</div>
+  </div>
+  <span class="badge">₹10,000 CHALLENGE</span>
+</header>
+
+<section class="hero">
+  <div class="metric-label">AVAILABLE BALANCE</div>
+  <div class="metric" id="balance">₹10,000</div>
+  <div class="subtitle" id="heroMessage">Your month starts now.</div>
+  <div class="progress"><div id="budgetBar"></div></div>
+  <div class="details"><span id="spentLabel">₹0 spent</span><span>₹10,000 starting budget</span></div>
+  <div class="hero-bottom">
+    <div class="hero-stat"><div class="metric-label">DAILY ALLOWANCE</div><strong id="daily">₹333</strong></div>
+    <div class="hero-stat"><div class="metric-label">DAYS REMAINING</div><strong id="days">30 days</strong></div>
+  </div>
+</section>
+
+<section class="metrics">
+  <div class="card"><div class="metric-label">TOTAL INCOME</div><div class="metric" id="incomeMetric">₹10,000</div><div class="metric-note">Starting funds + extra income</div></div>
+  <div class="card"><div class="metric-label">TOTAL EXPENSES</div><div class="metric negative" id="expenseMetric">₹0</div><div class="metric-note">Recorded spending</div></div>
+  <div class="card"><div class="metric-label">PROTECTED SAVINGS</div><div class="metric positive" id="savingsMetric">₹0</div><div class="metric-note">Reserved for goals</div></div>
+  <div class="card"><div class="metric-label">FINANCIAL HEALTH</div><div class="metric" id="healthMetric">100/100</div><div class="metric-note" id="healthNote">Month just started</div></div>
+</section>
+
+<div class="layout">
+<div>
+<section class="card section" id="transactions">
+  <div class="section-title"><h2>Add a transaction</h2><span class="muted">Live budget update</span></div>
+  <form id="transactionForm">
+    <div class="form-grid">
+      <div><label for="txType">TRANSACTION TYPE</label><select id="txType"><option value="expense">Expense</option><option value="income">Additional income</option></select></div>
+      <div><label for="txAmount">AMOUNT (₹)</label><input id="txAmount" type="number" min="0.01" max="1000000" step="0.01" required></div>
+      <div><label for="txCategory">CATEGORY</label><select id="txCategory"><option>Food</option><option>Transport</option><option>Education</option><option>Shopping</option><option>Entertainment</option><option>Bills</option><option>Health</option><option>Other</option></select></div>
+      <div><label for="txDay">CHALLENGE DAY</label><select id="txDay"></select></div>
+      <div class="full"><label for="txDescription">DESCRIPTION</label><input id="txDescription" maxlength="70" placeholder="e.g. Lunch with friends"></div>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">+ Add transaction</button></div>
+  </form>
+</section>
+
+<section class="card section">
+  <div class="section-title"><h2>Spending breakdown</h2><span class="muted">By category</span></div>
+  <div id="categories"></div>
+</section>
+
+<section class="card section">
+  <div class="section-title"><h2>Recent activity</h2><button class="btn" id="clearActivity" type="button">Clear activity</button></div>
+  <div id="activity"></div>
+</section>
+
+<section class="card section" id="goals">
+  <div class="section-title"><h2>Savings goals</h2><span class="muted">Save with intention</span></div>
+  <form id="goalForm">
+    <div class="form-grid">
+      <div><label for="goalName">GOAL NAME</label><input id="goalName" maxlength="50" placeholder="New headphones" required></div>
+      <div><label for="goalTarget">TARGET AMOUNT (₹)</label><input id="goalTarget" type="number" min="1" max="1000000" step="0.01" required></div>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">Create goal</button></div>
+  </form>
+  <div id="goalList"></div>
+</section>
+</div>
+
+<div>
+<section class="card section" id="commitments">
+  <div class="section-title"><h2>Commitments & subscriptions</h2><span class="muted">Recurring costs</span></div>
+  <form id="commitForm">
+    <label for="commitName">SUBSCRIPTION / BILL</label><input id="commitName" maxlength="50" placeholder="Music subscription" required>
+    <div class="form-grid" style="margin-top:12px">
+      <div><label for="commitAmount">MONTHLY COST (₹)</label><input id="commitAmount" type="number" min="0.01" max="1000000" step="0.01" required></div>
+      <div><label for="commitDay">DUE DAY</label><input id="commitDay" type="number" min="1" max="30" value="15" required></div>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">Add commitment</button></div>
+  </form>
+  <div id="commitList"></div>
+</section>
+
+<section class="card section" id="decisionLab">
+  <div class="section-title"><h2>Decision Lab ✳</h2><span class="badge">SIMULATE FIRST</span></div>
+  <p class="subtitle">Preview how a purchase, unexpected expense, extra income, subscription cancellation or savings transfer changes your money.</p>
+  <form id="simForm">
+    <label for="simType">YOUR DECISION</label>
+    <select id="simType">
+      <option value="purchase">Buy something</option>
+      <option value="unexpected">Unexpected expense</option>
+      <option value="income">Earn extra income</option>
+      <option value="subscription">Start a subscription</option>
+      <option value="cancel">Cancel a commitment</option>
+      <option value="save">Save toward a goal</option>
+    </select>
+    <div id="simAmountField" style="margin-top:12px"><label for="simAmount">AMOUNT (₹)</label><input id="simAmount" type="number" min="0.01" max="1000000" step="0.01" value="500"></div>
+    <div id="simNameField" style="margin-top:12px"><label for="simName">DESCRIPTION</label><input id="simName" maxlength="70" value="New purchase"></div>
+    <div id="simCommitField" class="hidden" style="margin-top:12px"><label for="simCommit">COMMITMENT TO CANCEL</label><select id="simCommit"></select></div>
+    <div id="simGoalField" class="hidden" style="margin-top:12px"><label for="simGoal">SAVINGS GOAL</label><select id="simGoal"></select></div>
+    <div class="actions"><button class="btn lime" type="submit">Simulate decision →</button><button class="btn" id="resetSim" type="button">Reset</button></div>
+  </form>
+  <div id="simResult" class="sim-result"><div class="metric-label">READY TO SIMULATE</div><p class="subtitle">Try a ₹500 purchase to see the consequences.</p></div>
+  <div class="actions"><button id="applySim" class="btn primary" type="button" disabled>Apply this decision</button></div>
+</section>
+
+<section class="card section" id="forecast">
+  <div class="section-title"><h2>Monthly forecast</h2></div>
+  <div class="category-row"><div class="category-head"><span>Projected closing balance</span><strong id="projected">₹10,000</strong></div><p class="muted">Estimated balance at day 30</p></div>
+  <div class="category-row"><div class="category-head"><span>Daily allowance</span><strong id="forecastDaily">₹333</strong></div><p class="muted">After reserved savings and unpaid commitments</p></div>
+  <div class="category-row"><div class="category-head"><span>Upcoming commitments</span><strong id="upcoming">₹0</strong></div></div>
+  <div class="risk-box"><div class="metric-label">FINANCIAL RISK</div><strong id="risk">Low risk</strong><p id="riskText">Your budget has room for planned spending.</p></div>
+  <h2 style="font-size:15px">Financial insights</h2><div id="insights"></div>
+</section>
+
+<section class="card section">
+  <div class="section-title"><h2>Challenge controls</h2></div>
+  <p class="subtitle">Advance one day at a time or restart the simulation.</p>
+  <div class="actions"><button class="btn primary" id="nextDay">Advance one day →</button><button class="btn danger" id="restart">Reset challenge</button></div>
+  <p class="muted" id="dayLabel">Day 1 of 30</p>
+</section>
+</div>
+</div>
+<footer>POCKETWISE · PERSONAL FINANCE SIMULATOR · DEMO DATA</footer>
+</main>
+</div>
+
+<script>
+"use strict";
+
+const START = 10000;
+const TOTAL_DAYS = 30;
+const KEY = "pocketwise_v2";
+const $ = id => document.getElementById(id);
+const money = n => "₹" + Number(n).toLocaleString("en-IN",{maximumFractionDigits:2});
+const icons = {Food:"🍜",Transport:"🚌",Education:"📚",Shopping:"🛍️",Entertainment:"🎧",Bills:"🧾",Health:"💊",Other:"💳"};
+
+function freshState(){return {day:1,expenses:[],incomes:[],goals:[],commitments:[],nextId:1};}
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(KEY));
+    if(s && Number.isInteger(s.day) && s.day>=1 && s.day<=30 &&
+       ["expenses","incomes","goals","commitments"].every(k=>Array.isArray(s[k]))) return s;
+  }catch(e){console.warn("Saved state unavailable",e);}
+  return freshState();
+}
+let state=load();
+let pending=null;
+
+function persist(){
+  try{localStorage.setItem(KEY,JSON.stringify(state));}
+  catch(e){console.warn("Unable to save state",e);}
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function expenses(){return state.expenses.reduce((a,x)=>a+x.amount,0);}
+function income(){return START+state.incomes.reduce((a,x)=>a+x.amount,0);}
+function balance(){return income()-expenses();}
+function savings(){return state.goals.reduce((a,g)=>a+g.saved,0);}
+function spendable(){return balance()-savings();}
+function daysLeft(){return Math.max(1,TOTAL_DAYS-state.day+1);}
+function commitmentsDue(){return state.commitments.filter(c=>!c.paid&&c.dueDay>=state.day).reduce((a,c)=>a+c.amount,0);}
+function allowance(){return Math.max(0,spendable()-commitmentsDue())/daysLeft();}
+function projected(){
+  const average=expenses()/Math.max(1,state.day);
+  return balance()-average*Math.max(0,TOTAL_DAYS-state.day)-commitmentsDue();
+}
+function health(){
+  let score=100;
+  if(balance()<0)score-=65;
+  else if(balance()<1000)score-=30;
+  else if(balance()<2500)score-=15;
+  if(projected()<0)score-=25;
+  else if(projected()<1000)score-=12;
+  if(allowance()<75)score-=15;
+  if(commitmentsDue()>Math.max(1,balance())*.5)score-=15;
+  return Math.max(0,Math.min(100,score));
+}
+function risk(){
+  if(balance()<0||projected()<0)return ["Critical risk","Your projected balance is negative. Reduce optional spending or add income.","#d9534f"];
+  if(allowance()<75||projected()<500)return ["High risk","Your financial buffer is thin. Review optional purchases and commitments.","#d9534f"];
+  if(allowance()<150||projected()<2000)return ["Moderate risk","Unexpected expenses could strain your budget.","#bd7a27"];
+  return ["Low risk","Your budget currently leaves room for planned spending.","#347847"];
+}
+function updateDaySelect(){
+  const el=$("txDay"),old=Number(el.value);
+  el.innerHTML="";
+  for(let d=1;d<=state.day;d++)el.add(new Option("Day "+d,d));
+  el.value=old>=1&&old<=state.day?old:state.day;
+}
+function renderMetrics(){
+  const r=risk();
+  $("balance").textContent=money(balance());
+  $("balance").style.color=balance()<0?"#ff9999":"#c8f36a";
+  $("heroMessage").textContent=balance()<0?"Your recorded expenses exceed your funds.":"Every choice changes the money you have left.";
+  $("budgetBar").style.width=Math.min(100,expenses()/START*100)+"%";
+  $("spentLabel").textContent=money(expenses())+" spent";
+  $("daily").textContent=money(allowance());
+  $("days").textContent=daysLeft()+" days";
+  $("incomeMetric").textContent=money(income());
+  $("expenseMetric").textContent=money(expenses());
+  $("savingsMetric").textContent=money(savings());
+  $("healthMetric").textContent=health()+"/100";
+  $("healthNote").textContent=r[0];
+  $("projected").textContent=money(projected());
+  $("forecastDaily").textContent=money(allowance());
+  $("upcoming").textContent=money(commitmentsDue());
+  $("risk").textContent=r[0];
+  $("risk").style.color=r[2];
+  $("riskText").textContent=r[1];
+  $("dayLabel").textContent="Day "+state.day+" of "+TOTAL_DAYS;
+}
+function renderActivity(){
+  const list=$("activity");
+  const items=[
+    ...state.expenses.map(x=>({...x,type:"expense"})),
+    ...state.incomes.map(x=>({...x,type:"income"}))
+  ].sort((a,b)=>b.day-a.day||b.id-a.id);
+  list.innerHTML="";
+  if(!items.length){list.innerHTML='<div class="empty">No transactions yet. Add your first transaction.</div>';return;}
+  items.slice(0,40).forEach(x=>{
+    const row=document.createElement("div");
+    row.className="transaction";
+    row.innerHTML=`<div class="tx-left"><div class="tx-icon">${x.type==="income"?"💰":icons[x.category]||"💳"}</div><div><div class="tx-name">${esc(x.description)}</div><div class="tx-meta">Day ${x.day} · ${esc(x.category||"Income")}</div></div></div><div class="tx-amount ${x.type==="income"?"positive":"negative"}">${x.type==="income"?"+":"−"}${money(x.amount)}</div>`;
+    list.appendChild(row);
+  });
+}
+function renderCategories(){
+  const el=$("categories"),groups={};
+  state.expenses.forEach(x=>groups[x.category]=(groups[x.category]||0)+x.amount);
+  const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]);
+  el.innerHTML="";
+  if(!entries.length){el.innerHTML='<div class="empty">Your spending breakdown will appear here.</div>';return;}
+  entries.forEach(([name,amount])=>{
+    const p=expenses()?amount/expenses()*100:0;
+    const row=document.createElement("div");row.className="category-row";
+    row.innerHTML=`<div class="category-head"><span>${icons[name]||"💳"} ${esc(name)}</span><strong>${money(amount)}</strong></div><div class="category-bar"><div style="width:${p}%"></div></div><div class="muted" style="margin-top:5px">${p.toFixed(1)}% of expenses</div>`;
+    el.appendChild(row);
+  });
+}
+function renderGoals(){
+  const el=$("goalList");el.innerHTML="";
+  if(!state.goals.length)el.innerHTML='<div class="empty">Create a savings goal to get started.</div>';
+  state.goals.forEach(g=>{
+    const p=Math.min(100,g.saved/g.target*100),row=document.createElement("div");
+    row.className="goal";
+    row.innerHTML=`<div class="goal-head"><strong>${esc(g.name)}</strong><span>${p.toFixed(0)}%</span></div><div class="progress"><div style="width:${p}%"></div></div><div class="details"><span>${money(g.saved)} saved</span><span>Target ${money(g.target)}</span></div><div class="actions"><button class="btn" data-save="${g.id}">Add savings</button><button class="btn danger" data-delgoal="${g.id}">Delete</button></div>`;
+    el.appendChild(row);
+  });
+  updateOptions();
+}
+function renderCommitments(){
+  const el=$("commitList");el.innerHTML="";
+  if(!state.commitments.length)el.innerHTML='<div class="empty">No recurring costs added.</div>';
+  state.commitments.forEach(c=>{
+    const row=document.createElement("div");row.className="transaction";
+    row.innerHTML=`<div><div class="tx-name">${esc(c.name)}</div><div class="tx-meta">${money(c.amount)} · Due day ${c.dueDay} · ${c.paid?"Paid":"Unpaid"}</div></div><div><button class="btn" data-paid="${c.id}">${c.paid?"Mark unpaid":"Mark paid"}</button><button class="btn danger" data-delcommit="${c.id}">Delete</button></div>`;
+    el.appendChild(row);
+  });
+  updateOptions();
+}
+function renderInsights(){
+  const lines=[
+    balance()<0?"Your balance is negative. Review spending and consider additional income.":"You currently have "+money(balance())+" available.",
+    projected()<0?"At your current pace, your projected closing balance is negative.":"Estimated closing balance: "+money(projected())+".",
+    "Daily allowance: "+money(allowance())+" after reserved savings and unpaid commitments."
+  ];
+  const cats={};
+  state.expenses.forEach(x=>cats[x.category]=(cats[x.category]||0)+x.amount);
+  const top=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+  if(top)lines.push(top[0]+" is your largest spending category at "+money(top[1])+".");
+  $("insights").innerHTML=lines.map(s=>`<div class="insight">${esc(s)}</div>`).join("");
+}
+function render(){
+  updateDaySelect();renderMetrics();renderActivity();renderCategories();renderGoals();renderCommitments();renderInsights();persist();
+}
+function addExpense(amount,category,description,day=state.day){
+  state.expenses.push({id:state.nextId++,amount,category,description,day});
+}
+function addIncome(amount,description,day=state.day){
+  state.incomes.push({id:state.nextId++,amount,category:"Income",description,day});
+}
+
+$("transactionForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const amount=Number($("txAmount").value),type=$("txType").value,day=Number($("txDay").value);
+  if(!Number.isFinite(amount)||amount<=0||amount>1000000){alert("Enter a valid amount.");return;}
+  if(day<1||day>state.day){alert("Choose a valid day.");return;}
+  const description=$("txDescription").value.trim()||"Transaction";
+  if(type==="income")addIncome(amount,description,day);
+  else addExpense(amount,$("txCategory").value,description,day);
+  $("txAmount").value="";$("txDescription").value="";render();
+});
+
+$("goalForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const name=$("goalName").value.trim(),target=Number($("goalTarget").value);
+  if(!name||!Number.isFinite(target)||target<=0||target>1000000){alert("Enter a valid savings goal.");return;}
+  state.goals.push({id:state.nextId++,name,target,saved:0});
+  $("goalName").value="";$("goalTarget").value="";render();
+});
+$("goalList").addEventListener("click",e=>{
+  const save=e.target.closest("[data-save]"),del=e.target.closest("[data-delgoal]");
+  if(save){
+    const g=state.goals.find(x=>x.id===Number(save.dataset.save));if(!g)return;
+    const amount=Number(prompt("Amount to reserve? Spendable balance: "+money(spendable()),Math.min(g.target-g.saved,Math.max(0,spendable()))));
+    if(!Number.isFinite(amount)||amount<=0)return;
+    if(amount>spendable()||amount>g.target-g.saved){alert("Amount exceeds available funds or the remaining goal target.");return;}
+    g.saved+=amount;render();
+  }
+  if(del){
+    if(!confirm("Delete this goal and release its reserved savings?"))return;
+    state.goals=state.goals.filter(g=>g.id!==Number(del.dataset.delgoal));render();
+  }
+});
+$("commitForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const name=$("commitName").value.trim(),amount=Number($("commitAmount").value),dueDay=Number($("commitDay").value);
+  if(!name||!Number.isFinite(amount)||amount<=0||amount>1000000||dueDay<1||dueDay>30){alert("Enter a valid commitment.");return;}
+  state.commitments.push({id:state.nextId++,name,amount,dueDay,paid:false});
+  $("commitName").value="";$("commitAmount").value="";render();
+});
+$("commitList").addEventListener("click",e=>{
+  const paid=e.target.closest("[data-paid]"),del=e.target.closest("[data-delcommit]");
+  if(paid){const c=state.commitments.find(x=>x.id===Number(paid.dataset.paid));if(c)c.paid=!c.paid;render();}
+  if(del){state.commitments=state.commitments.filter(x=>x.id!==Number(del.dataset.delcommit));pending=null;render();}
+});
+$("clearActivity").addEventListener("click",()=>{
+  if(!confirm("Delete all recorded income and expenses?"))return;
+  state.expenses=[];state.incomes=[];pending=null;render();
+});
+
+function updateOptions(){
+  const cs=$("simCommit"),gs=$("simGoal");
+  const oldC=cs.value,oldG=gs.value;
+  cs.innerHTML="";gs.innerHTML="";
+  if(!state.commitments.length)cs.add(new Option("No commitments available",""));
+  state.commitments.forEach(c=>cs.add(new Option(c.name+" — "+money(c.amount),c.id)));
+  if(!state.goals.length)gs.add(new Option("Create a goal first",""));
+  state.goals.forEach(g=>gs.add(new Option(g.name+" — "+money(g.saved)+" / "+money(g.target),g.id)));
+  if([...cs.options].some(o=>o.value===oldC))cs.value=oldC;
+  if([...gs.options].some(o=>o.value===oldG))gs.value=oldG;
+}
+function updateSimFields(){
+  const t=$("simType").value;
+  $("simAmountField").classList.toggle("hidden",t==="cancel");
+  $("simNameField").classList.toggle("hidden",t==="cancel");
+  $("simCommitField").classList.toggle("hidden",t!=="cancel");
+  $("simGoalField").classList.toggle("hidden",t!=="save");
+  const names={purchase:"New purchase",unexpected:"Unexpected expense",income:"Additional income",subscription:"New subscription",save:"Savings transfer"};
+  if(names[t])$("simName").value=names[t];
+  pending=null;$("applySim").disabled=true;
+}
+$("simType").addEventListener("change",updateSimFields);
+
+function simulate(){
+  const type=$("simType").value;
+  const name=$("simName").value.trim()||"Financial decision";
+  let amount=Number($("simAmount").value),delta=0,saveDelta=0,commitDelta=0,goal=null,commit=null;
+  if(type==="cancel"){
+    commit=state.commitments.find(c=>c.id===Number($("simCommit").value));
+    if(!commit){alert("Add a commitment first.");return;}
+    amount=commit.amount;commitDelta=-amount;
+  }else{
+    if(!Number.isFinite(amount)||amount<=0||amount>1000000){alert("Enter a valid amount.");return;}
+    if(type==="purchase"||type==="unexpected")delta=-amount;
+    if(type==="income")delta=amount;
+    if(type==="subscription"){delta=-amount;commitDelta=amount;}
+    if(type==="save"){
+      goal=state.goals.find(g=>g.id===Number($("simGoal").value));
+      if(!goal){alert("Create a savings goal first.");return;}
+      if(amount>spendable()||amount>goal.target-goal.saved){alert("Amount exceeds spendable funds or the remaining goal target.");return;}
+      saveDelta=amount;
+    }
+  }
+  const newBalance=balance()+delta;
+  const newSavings=savings()+saveDelta;
+  const newCommitments=Math.max(0,commitmentsDue()+commitDelta);
+  const newDaily=Math.max(0,newBalance-newSavings-newCommitments)/daysLeft();
+  const newProjection=projected()+delta-commitDelta;
+  pending={type,name,amount,delta,saveDelta,commitDelta,goalId:goal?.id??null,commitId:commit?.id??null};
+  $("applySim").disabled=false;
+  $("simResult").innerHTML=`
+    <div class="metric-label">SIMULATION PREVIEW</div>
+    <p style="font-weight:800;font-size:15px">${esc(name)}</p>
+    <div class="sim-numbers">
+      <div><div class="metric-label">NEW BALANCE</div><strong>${money(newBalance)}</strong></div>
+      <div><div class="metric-label">DAILY ALLOWANCE</div><strong>${money(newDaily)}</strong></div>
+      <div><div class="metric-label">RESERVED SAVINGS</div><strong>${money(newSavings)}</strong></div>
+      <div><div class="metric-label">PROJECTED CLOSING</div><strong>${money(newProjection)}</strong></div>
+    </div>
+    <p class="subtitle" style="margin-top:14px">${newBalance<0?"Warning: this decision takes your balance below zero.":newDaily<75?"Warning: your daily allowance becomes very small.":"Review these estimates before applying the decision."}</p>`;
+}
+$("simForm").addEventListener("submit",e=>{e.preventDefault();simulate();});
+$("resetSim").addEventListener("click",()=>{
+  $("simType").value="purchase";$("simAmount").value=500;updateSimFields();
+  $("simResult").innerHTML='<div class="metric-label">READY TO SIMULATE</div><p class="subtitle">Run a scenario to preview its consequences.</p>';
+});
+$("applySim").addEventListener("click",()=>{
+  if(!pending)return;
+  const p=pending;
+  if((p.type==="purchase"||p.type==="unexpected")&&p.amount>balance()&&!confirm("This decision exceeds your current balance. Apply it anyway?"))return;
+  if(p.type==="purchase"||p.type==="unexpected")addExpense(p.amount,p.type==="purchase"?"Shopping":"Other",p.name);
+  if(p.type==="income")addIncome(p.amount,p.name);
+  if(p.type==="subscription"){
+    addExpense(p.amount,"Bills",p.name);
+    state.commitments.push({id:state.nextId++,name:p.name,amount:p.amount,dueDay:Math.min(30,state.day+1),paid:false});
+  }
+  if(p.type==="cancel")state.commitments=state.commitments.filter(c=>c.id!==p.commitId);
+  if(p.type==="save"){
+    const g=state.goals.find(x=>x.id===p.goalId);
+    if(!g||p.amount>spendable()||p.amount>g.target-g.saved){alert("Your budget changed. Simulate again.");pending=null;$("applySim").disabled=true;return;}
+    g.saved+=p.amount;
+  }
+  pending=null;$("applySim").disabled=true;render();
+  $("simResult").innerHTML='<div class="metric-label">DECISION APPLIED ✓</div><p style="font-weight:800">Dashboard updated.</p><p class="subtitle">Your balance, allowance, savings, commitments, forecast and financial risk have been recalculated.</p>';
+});
+$("nextDay").addEventListener("click",()=>{
+  if(state.day>=30){alert("You have reached day 30.");return;}
+  state.day++;pending=null;$("applySim").disabled=true;render();
+});
+$("restart").addEventListener("click",()=>{
+  if(!confirm("Reset the challenge and delete all demo entries?"))return;
+  state=freshState();pending=null;$("applySim").disabled=true;render();
+  $("simResult").innerHTML='<div class="metric-label">NEW CHALLENGE STARTED</div><p class="subtitle">Your ₹10,000, 30-day budget has been reset.</p>';
+});
+document.querySelectorAll(".nav[data-target]").forEach(btn=>btn.addEventListener("click",()=>{
+  document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+  $(btn.dataset.target)?.scrollIntoView({behavior:"smooth",block:"start"});
+}));
+
+// Start the app only after the page elements have been created.
+try {
+  updateSimFields();
+  render();
+} catch(error) {
+  console.error("Pocketwise initialization failed:",error);
+  document.querySelector("main").insertAdjacentHTML("afterbegin",
+    '<div style="background:#fee;color:#900;padding:15px;border-radius:10px">Pocketwise could not start. Open the browser Console and check the error details.</div>');
+}
+</script>
+</body>
+</html>
